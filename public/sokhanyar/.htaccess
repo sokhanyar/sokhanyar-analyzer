@@ -22,10 +22,3 @@ RewriteRule ^.*\.css$ - [env=headercss:1]
 
 Header set Content-type application/javascript env=headerjs
 Header set Content-type text/css env=headercss
-
-ErrorDocument 400 /400.shtml
-ErrorDocument 401 /401.shtml
-ErrorDocument 403 /403.shtml
-ErrorDocument 404 /404.shtml
-ErrorDocument 500 /500.shtml
-ErrorDocument 503 /503.shtml

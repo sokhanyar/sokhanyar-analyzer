@@ -1,9 +1,17 @@
 <script lang="ts" setup>
 import Uploader from "@/components/Uploader.vue";
 import GenerateResp from "@/components/GenerateResp.vue";
-import {onMounted, ref} from "vue";
+import { onMounted, ref } from "vue";
+import { useCookies } from "vue3-cookies";
 
-const isScrolled = ref(false)
+const { cookies } = useCookies();
+
+const isScrolled = ref(false);
+const systemSettingDark = window.matchMedia("(prefers-color-scheme: dark)");
+const systemDefaultTheme = systemSettingDark.matches;
+const doubleCheckDialogVisible = ref(
+  (cookies.get("double-check-dialog") ?? true) != "0x3411",
+);
 
 const uploadedFile = ref(null);
 const patientName = ref(null);
@@ -22,39 +30,119 @@ const onProcessFailure = (error) => {
 };
 
 onMounted(() => {
-  window.addEventListener('scroll', function (event) {
+  if (doubleCheckDialogVisible.value) {
+    cookies.set("double-check-dialog", "0x3411");
+  }
+  window.addEventListener("scroll", function () {
     isScrolled.value = window.scrollY >= 5;
-  })
-})
+  });
+});
+</script>
+
+<script lang="ts">
+export default {
+  data() {
+    return {
+      showDivider: false,
+      contentMargin: 0,
+    };
+  },
+  mounted() {
+    this.setContentMargin();
+    this.checkContentPosition();
+    window.addEventListener("scroll", this.checkContentPosition);
+    window.addEventListener("resize", this.checkContentPosition);
+  },
+  beforeDestroy() {
+    window.removeEventListener("scroll", this.checkContentPosition);
+    window.removeEventListener("resize", this.checkContentPosition);
+  },
+  methods: {
+    setContentMargin() {
+      const footer = this.$refs.footer;
+      // ارتفاع div ثابت
+      this.contentMargin = footer.getBoundingClientRect().height; // تنظیم margin-top برای محتوای content
+    },
+    checkContentPosition() {
+      const footer = this.$refs.footer.getBoundingClientRect();
+      const content = this.$refs.content.getBoundingClientRect();
+      // محاسبه ارتفاع کل صفحه و موقعیت اسکرول
+      const pageHeight = document.documentElement.scrollHeight;
+      const viewportHeight = window.innerHeight;
+      const scrollPosition = window.scrollY;
+
+      // اگر محتوا زیر fixed div باشد و صفحه قابلیت اسکرول داشته باشد
+      this.showDivider =
+        content.top < footer.bottom &&
+        pageHeight > viewportHeight &&
+        scrollPosition + 1 < pageHeight - viewportHeight;
+    },
+  },
+};
 </script>
 
 <template>
-
-  <h1 id="title">تحلیلگر صوت سخن یار</h1>
-  <div class="spacer"/>
-  <Uploader
-      v-if="!uploadedFile || !patientName"
-      @onFileUploaded="fileUploaded"
-      @onPatientNameSubmitted="patientNameSubmitted"
-  />
-  <GenerateResp
-      v-else
-      :patientName="patientName"
-      :uploadedFile="uploadedFile"
-      @onFailure="onProcessFailure"
-  />
-  <div :class="['footer', (isScrolled) ? 'footer-shadow' : '']">
-    <Divider v-if="isScrolled" id="footer-boarder"/>
+  <Dialog
+    v-model:visible="doubleCheckDialogVisible"
+    header="سخن یار ممکن است اشتباه کند!"
+    modal
+    style="width: 75%"
+  >
+    <p class="m-0">
+      هوش مصنوعی سخن یار، به دلیل اینکه همچنان در حال یادگیری است، ممکن است بعضی
+      مواقع نتایجی که دلخواه شما نباشد را نشان دهد. لطفاً به بازخورد های او را
+      بررسی و به آن نظر دهید و به یادگیری سریعتر و بهتر او کمک کنید.
+    </p>
+  </Dialog>
+  <div ref="footer" :class="['footer', showDivider ? 'footer-shadow' : '']">
+    <Transition>
+      <Divider v-if="showDivider" id="footer-boarder" />
+    </Transition>
     <p id="powered-by">
       قدرت یافته با
       <a id="powered-by-link" href="https://gemini.google.com" target="_blank">
-        Gemini AI
+        Gemini
       </a>
-      <img id="powered-by-icon" alt="logo" src="../assets/gemini-icon.svg"/>
+      <img id="powered-by-icon" alt="logo" src="@/assets/gemini-icon.svg" />
     </p>
-    <a href="https://saltech.ir" rel="noopener noreferrer" target="_blank">
-      <img id="company-logo" alt="صالتک" src="../assets/saltech.png"/>
-    </a>
+    <div id="logos">
+      <a
+        href="https://clinic-negaheno.com"
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        <img
+          id="negaheno-logo"
+          :src="
+            systemDefaultTheme
+              ? '/sokhanyar/negaheno-dark.webp'
+              : '/sokhanyar/negaheno-light.webp'
+          "
+          alt="نگاه نو"
+        />
+      </a>
+      <a href="https://saltech.ir" rel="noopener noreferrer" target="_blank">
+        <img id="company-logo" alt="صالتک" src="@/assets/saltech.webp" />
+      </a>
+    </div>
+  </div>
+  <div
+    ref="content"
+    :style="{ marginBottom: contentMargin + 'px' }"
+    class="content"
+  >
+    <h1 id="title">تحلیلگر صوت سخن یار</h1>
+    <div class="spacer" />
+    <Uploader
+      v-if="!uploadedFile || !patientName"
+      @onFileUploaded="fileUploaded"
+      @onPatientNameSubmitted="patientNameSubmitted"
+    />
+    <GenerateResp
+      v-else
+      :uploadedFile="uploadedFile"
+      @onFailure="onProcessFailure"
+    />
   </div>
 </template>
 
@@ -69,10 +157,11 @@ onMounted(() => {
 
 .footer-shadow {
   /* https://smoothshadows.com/#djEsMSw0LDAuMDUsMzAsMzIsMCwjMDMwNzEyLCMwZjE3MmEsIzFlMjkzYiwx */
-  box-shadow: 0 2px 2px rgba(3, 7, 18, 0.01),
-  0 8px 8px rgba(3, 7, 18, 0.03),
-  0 18px 17px rgba(3, 7, 18, 0.04),
-  0 32px 30px rgba(3, 7, 18, 0.05);
+  box-shadow:
+    0 2px 2px rgba(3, 7, 18, 0.01),
+    0 8px 8px rgba(3, 7, 18, 0.03),
+    0 18px 17px rgba(3, 7, 18, 0.04),
+    0 32px 30px rgba(3, 7, 18, 0.05);
 }
 
 .footer {
@@ -105,49 +194,96 @@ onMounted(() => {
   margin-top: -1rem;
 }
 
-#company-logo:hover {
-  opacity: 0.85;
-}
-
-#company-logo {
-  opacity: 0.63;
-  width: 2.2rem;
+#logos {
   margin: 1rem 0 0.5rem 1.75rem;
 }
 
-@media (max-width: 400px) {
+#company-logo:hover,
+#negaheno-logo:hover {
+  opacity: 0.85;
+}
+
+#company-logo,
+#negaheno-logo {
+  opacity: 0.63;
+  width: 2.2rem;
+}
+
+#negaheno-logo {
+  margin: 0 0 0 1.5rem;
+}
+
+@media (max-width: 440px) {
   #powered-by {
     scale: 0.9;
     margin-right: 0.75rem;
   }
 
-  #company-logo {
-    width: 1.8rem;
+  #logos {
     margin-left: 1.5rem;
+  }
+
+  #company-logo,
+  #negaheno-logo {
+    width: 1.8rem;
   }
 }
 
-@media (max-width: 265px) {
+@media (max-width: 285px) {
   #powered-by {
     scale: 0.8;
     margin-right: 0.5rem;
   }
 
-  #company-logo {
-    width: 1.5rem;
+  #logos {
     margin-left: 1.25rem;
+  }
+
+  #company-logo,
+  #negaheno-logo {
+    width: 1.5rem;
   }
 }
 
-@media (max-width: 235px) {
+@media (max-width: 265px) {
   #powered-by {
     scale: 0.7;
     margin-right: -1rem;
   }
 
-  #company-logo {
-    width: 1.3rem;
+  #logos {
     margin-left: 0.5rem;
   }
+
+  #company-logo,
+  #negaheno-logo {
+    width: 1.3rem;
+  }
+}
+
+@media (max-width: 220px) {
+  #powered-by {
+    scale: 0.6;
+    margin-right: -1.5rem;
+  }
+
+  #logos {
+    margin-left: 0.25rem;
+  }
+
+  #company-logo,
+  #negaheno-logo {
+    width: 1.2rem;
+  }
+}
+
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.18s ease-in-out;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
 }
 </style>

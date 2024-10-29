@@ -10,23 +10,26 @@ const emit = defineEmits(["onFileUploaded", "onPatientNameSubmitted"]);
 
 const toast = useToast();
 
-const patientName = ref(null);
+const patientName = ref(" ");
+const showBePatient = ref(false);
 
 const selectedFile = ref(null);
 const isUploading = ref(false);
 
-const apiKey = import.meta.env.VITE_API_KEY;
-
 async function uploadToGemini() {
-  if (!patientName.value) {
-    toast.add({
-      severity: "error",
-      summary: "نام درمانجو را وارد کنید.",
-      life: 3000,
-      closable: false,
-    });
-    return;
-  }
+  // const timeoutId = setTimeout(() => {
+  //   showBePatient.value = true;
+  // }, 7000);
+
+  // if (!patientName.value) {
+  //   toast.add({
+  //     severity: "error",
+  //     summary: "نام درمانجو را وارد کنید.",
+  //     life: 3000,
+  //     closable: false,
+  //   });
+  //   return;
+  // }
 
   if (!selectedFile.value) {
     toast.add({
@@ -47,36 +50,56 @@ async function uploadToGemini() {
   await axios
     .post("https://ai.saltech.ir/api/upload/v1beta/files", formData, {
       headers: {
-        "x-goog-api-key": `${apiKey}`,
+        "x-goog-api-key": `${import.meta.env.VITE_API_KEY}`,
         "Content-Type": "multipart/form-data",
       },
     })
     .then(function (response) {
-      const uploadResult = response.data;
-      const uploadedFile = uploadResult.file;
-      // toast.add({
-      //   severity: "success",
-      //   summary: `فایل ${selectedFile.value.name} بارگذاری شد`,
-      //   detail: "در حال پردازش اطلاعات ورودی ...",
-      //   life: 2000,
-      //   closable: false,
-      // });
-      emit("onPatientNameSubmitted", patientName.value);
-      emit("onFileUploaded", uploadedFile);
+      if (response.toString().includes("error")) {
+        toast.add({
+          severity: "error",
+          summary: "خطا هنگام آپلود\nلطفاً مجدداً تلاش کنید.",
+          detail: response.toString(),
+          life: 3000,
+          closable: false,
+        });
+      } else {
+        const uploadResult = response.data;
+        const uploadedFile = uploadResult.file;
+        toast.add({
+          severity: "success",
+          summary: `فایل ${selectedFile.value.name} بارگذاری شد`,
+          detail: "در حال پردازش اطلاعات ورودی ...",
+          life: 2000,
+          closable: false,
+        });
+        emit("onPatientNameSubmitted", patientName.value);
+        emit("onFileUploaded", uploadedFile);
+      }
     })
     .catch(function (error) {
-      toast.add({
-        severity: "error",
-        summary: "خطا هنگام آپلود",
-        detail: error,
-        life: 3000,
-        closable: false,
-      });
+      if (
+        error.toString().includes("An error occurred due to the file upload.")
+      ) {
+        toast.add({
+          severity: "error",
+          detail: "خطا هنگام آپلود\nلطفاً مجدداً تلاش کنید.",
+          life: 3000,
+          closable: false,
+        });
+      } else {
+        toast.add({
+          severity: "error",
+          summary: "خطا هنگام آپلود",
+          detail: error,
+          life: 3000,
+          closable: false,
+        });
+      }
     })
     .finally(function () {
       done();
       isUploading.value = false;
-      selectedFile.value = null;
     });
 }
 
@@ -88,22 +111,19 @@ function onFileSelect(event) {
 <template>
   <Toast />
   <div class="container">
-    <p>
-      فایل صوت مورد نظر خود را برای <b>بازخورد</b> بارگذاری و نام درمانجو را
-      وارد کنید.
-    </p>
+    <p>فایل صوت مورد نظر خود را برای <b>بازخورد</b> بارگذاری کنید.</p>
     <div class="spacer-col" />
-    <InputText
-      v-model="patientName"
-      :aria-disabled="isUploading"
-      :disabled="isUploading"
-      aria-required="true"
-      class="patient-name"
-      placeholder="نام درمانجو"
-      size="small"
-      type="text"
-    />
-    <div class="spacer-col" />
+    <!--    <InputText-->
+    <!--      v-model="patientName"-->
+    <!--      :aria-disabled="isUploading"-->
+    <!--      :disabled="isUploading"-->
+    <!--      aria-required="true"-->
+    <!--      class="patient-name"-->
+    <!--      placeholder="نام درمانجو"-->
+    <!--      size="small"-->
+    <!--      type="text"-->
+    <!--    />-->
+    <!--    <div class="spacer-col" />-->
     <div class="uploader">
       <FileUpload
         ref="file"
