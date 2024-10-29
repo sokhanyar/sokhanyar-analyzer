@@ -973,35 +973,25 @@ onMounted(() => {
         {{ generatedResponse.response.feedback }}
       </p>
       <Transition>
-        <div
-          v-if="!feedbackText && !wantedModel"
-          id="response-items"
-          class="flex flex-wrap justify-center gap-4"
-        >
+        <div v-if="!feedbackText && !wantedModel" id="response-items">
           <CascadeSelect
-            class="message-button"
+            id="cascade-model-select"
             v-model="wantedModel"
-            :options="availableModels"
-            optionLabel="modelName"
             :optionGroupChildren="[]"
+            :options="availableModels"
             :placeholder="
               selectedModel.modelName
                 .toString()
                 .substring(0, selectedModel.modelName.toString().indexOf(' | '))
             "
-            onselect="modelSelected"
+            class="message-button"
+            optionLabel="modelName"
+            variant="outlined"
           />
-          <div class="flex flex-nowrap gap-4">
-            <Button
-              v-tooltip="'پسندیدن بازخورد'"
-              aria-label="Like"
-              class="message-button"
-              icon="pi pi-thumbs-up"
-              rounded
-              severity="success"
-              text
-              @click="likeResponse"
-            />
+          <div
+            id="feedback-main-layout"
+            class="flex flex-row flex-nowrap justify-center gap-4"
+          >
             <Button
               v-tooltip="'نپسندیدن بازخورد'"
               aria-label="Dislike"
@@ -1011,6 +1001,16 @@ onMounted(() => {
               severity="danger"
               text
               @click="showFeedback"
+            />
+            <Button
+              v-tooltip="'پسندیدن بازخورد'"
+              aria-label="Like"
+              class="message-button"
+              icon="pi pi-thumbs-up"
+              rounded
+              severity="success"
+              text
+              @click="likeResponse"
             />
           </div>
         </div>
@@ -1043,7 +1043,13 @@ onMounted(() => {
 }
 
 #response-items {
-  margin-top: 1rem;
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  gap: 0.1rem;
 }
 
 .loading {
@@ -1082,6 +1088,30 @@ onMounted(() => {
   font-size: 0.65rem;
   font-weight: 150;
   margin-top: 1.3rem;
+}
+
+#cascade-model-select:hover {
+  border: revert-layer;
+  background: revert-layer;
+}
+
+#cascade-model-select {
+  margin-top: 0.28rem;
+  border: none;
+  background: none;
+}
+
+#feedback-question {
+  color: var(--p-stone-300);
+}
+
+#feedback-main-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.6rem;
+  gap: 0.1rem;
 }
 
 .v-enter-active,

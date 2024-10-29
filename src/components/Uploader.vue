@@ -1,9 +1,8 @@
 <script lang="ts" setup>
-import InputText from "primevue/inputtext";
 import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
 import { ref } from "vue";
-import { start, done } from "nprogress";
+import { done, start } from "nprogress";
 import axios from "axios";
 
 const emit = defineEmits(["onFileUploaded", "onPatientNameSubmitted"]);
@@ -17,9 +16,9 @@ const selectedFile = ref(null);
 const isUploading = ref(false);
 
 async function uploadToGemini() {
-  // const timeoutId = setTimeout(() => {
-  //   showBePatient.value = true;
-  // }, 7000);
+  const timeoutId = setTimeout(() => {
+    showBePatient.value = true;
+  }, 20000);
 
   // if (!patientName.value) {
   //   toast.add({
@@ -99,6 +98,8 @@ async function uploadToGemini() {
     })
     .finally(function () {
       done();
+      clearTimeout(timeoutId);
+      showBePatient.value = false;
       isUploading.value = false;
     });
 }
@@ -112,52 +113,46 @@ function onFileSelect(event) {
   <Toast />
   <div class="container">
     <p>فایل صوت مورد نظر خود را برای <b>بازخورد</b> بارگذاری کنید.</p>
+    <p id="helper-text">
+      <span class="pi pi-exclamation-triangle"></span>&nbsp;&nbsp;آپلود، به حجم
+      فایل و سرعت اینترنت بستگی دارد.<br />اگر همچنان مشکلی داشت، صفحه را مجدداً
+      بارگزاری کنید.
+    </p>
     <div class="spacer-col" />
-    <!--    <InputText-->
-    <!--      v-model="patientName"-->
-    <!--      :aria-disabled="isUploading"-->
-    <!--      :disabled="isUploading"-->
-    <!--      aria-required="true"-->
-    <!--      class="patient-name"-->
-    <!--      placeholder="نام درمانجو"-->
-    <!--      size="small"-->
-    <!--      type="text"-->
-    <!--    />-->
-    <!--    <div class="spacer-col" />-->
     <div class="uploader">
       <FileUpload
+        id="choose-large"
         ref="file"
+        v-tooltip.right="
+          'فایل چالش یا کنفرانس رو که از گروه ایتا دریافت کرده اید، اینجا وارد کنید.\nمعمولاً در پوشه \'Eitaa Desktop\' (در ویندوز) یا \'Eitaa/Eitaa Audio\' (در اندروید) قرار می گیرد.'
+        "
         :disabled="isUploading"
         :maxFileSize="52428800"
         accept="audio/*"
         aria-required="true"
         choose-label="انتخاب"
         class="choose"
-        id="choose-large"
         invalid-file-size-message="حداکثر حجم صوت: 50MB"
         mode="basic"
         name="file[]"
         @select="onFileSelect"
-        v-tooltip.right="
-          'فایل چالش یا کنفرانس رو که از گروه ایتا دریافت کرده اید، اینجا وارد کنید.\nمعمولاً در پوشه \'Eitaa Desktop\' (در ویندوز) یا \'Eitaa/Eitaa Audio\' (در اندروید) قرار می گیرد.'
-        "
       />
       <FileUpload
+        id="choose-small"
         ref="file"
+        v-tooltip.click.right="
+          'فایل چالش یا کنفرانس رو که از گروه ایتا دریافت کرده اید، اینجا وارد کنید.\nمعمولاً در پوشه \'Eitaa Desktop\' (در ویندوز) یا \'Eitaa/Eitaa Audio\' (در اندروید) قرار می گیرد.'
+        "
         :disabled="isUploading"
         :maxFileSize="52428800"
         accept="audio/*"
         aria-required="true"
         choose-label=" "
         class="choose"
-        id="choose-small"
         invalid-file-size-message="حداکثر حجم صوت: 50MB"
         mode="basic"
         name="file[]"
         @select="onFileSelect"
-        v-tooltip.click.right="
-          'فایل چالش یا کنفرانس رو که از گروه ایتا دریافت کرده اید، اینجا وارد کنید.\nمعمولاً در پوشه \'Eitaa Desktop\' (در ویندوز) یا \'Eitaa/Eitaa Audio\' (در اندروید) قرار می گیرد.'
-        "
       />
       <div class="spacer-row" />
       <Button
@@ -186,6 +181,7 @@ function onFileSelect(event) {
       >
       </Button>
     </div>
+    <p id="upload-help">Max: 50MB | *.mp3, *.ogg, *.aac</p>
   </div>
 </template>
 
@@ -201,6 +197,19 @@ function onFileSelect(event) {
 
 .patient-name {
   width: 75%;
+}
+
+#helper-text {
+  margin-top: 1rem;
+  color: var(--p-stone-500);
+}
+
+#upload-help {
+  width: 100%;
+  margin-top: 0.8rem;
+  padding-left: 0.4rem;
+  color: var(--p-red-400);
+  text-align: left;
 }
 
 #upload-large,
