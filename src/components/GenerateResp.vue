@@ -9,7 +9,7 @@ import {
   HarmBlockThreshold,
   HarmCategory,
 } from "@google/generative-ai";
-import { onMounted, ref, type Ref } from "vue";
+import { onMounted, ref, type Ref, watchEffect } from "vue";
 import { copyToClipboard } from "@/scripts/clipboard";
 
 const { uploadedFile } = defineProps(["uploadedFile"]);
@@ -35,7 +35,19 @@ const API_KEYS = [
   import.meta.env.VITE_API_KEY_XIII,
 ];
 
-const modelName = ref("gemini-1.5-flash-002");
+const availableModels = [
+  {
+    modelName: "مدل ساده | سرعت بیشتر",
+    modelPartName: "gemini-1.5-flash-002",
+  },
+  {
+    modelName: "مدل حرفه ای | دقت بیشتر",
+    modelPartName: "gemini-1.5-pro-002",
+  },
+];
+
+const selectedModel = ref(availableModels[0]);
+const wantedModel = ref(null);
 const showBePatient = ref(false);
 const feedbackLayout = ref();
 const feedbackText = ref(null);
@@ -454,7 +466,7 @@ async function doGenerate() {
 
     // TODO: چک کن ببین میتونیم ویس هایی رو که تأیید میکنه خوبه رو توی CacheContent ذحیره کنیم یا نه.
     const model = genAi.getGenerativeModel({
-      model: modelName.value,
+      model: selectedModel.value.modelPartName,
       safetySettings: feedbackSafetySettings,
       systemInstruction: sokhanyarSystemInstructions,
       generationConfig: generationConfig,
@@ -747,15 +759,13 @@ async function doGenerate() {
     } else if (!feedbackText.value) {
       feedbackPenaltyCount.value = 0;
     }
-    const codeBlock = result.response.candidates[0].content.parts[0].text;
-    console.log(codeBlock);
-    // const jsonString = codeBlock.match(/```json\s*([\s\S]*?)\s*```/)[1];
-    const jsonString = codeBlock
-      .replace(/^```json\n/, "")
-      .replace(/\n```$/, "");
-    const jsonObject = JSON.parse(jsonString);
-    console.log(jsonObject);
-    generatedResponse.value = jsonObject;
+    const givenResponse = result.response.candidates[0].content.parts[0].text;
+    // console.log(givenResponse);
+    const decodedResponse = JSON.parse(
+      givenResponse.replace(/^```json\n/, "").replace(/\n```$/, ""),
+    );
+    // console.log(decodedResponse);
+    generatedResponse.value = decodedResponse;
   } catch (error) {
     if (
       error.toString().includes("check quota") ||
@@ -768,9 +778,8 @@ async function doGenerate() {
         updateResponse();
         return;
       } else {
-        const lightModel = "gemini-1.5-flash-002";
-        if (modelName.value != lightModel) {
-          modelName.value = "gemini-1.5-flash-002";
+        if (selectedModel.value != availableModels[0]) {
+          selectedModel.value = availableModels[0];
           retryIndex.value = 0;
           apiKey.value = API_KEYS[0];
           console.error("Quota limit exceed, using lighter version.");
@@ -908,6 +917,27 @@ const showFeedback = (event) => {
   feedbackLayout.value.toggle(event);
 };
 
+watchEffect(() => {
+  if (wantedModel.value) {
+    if (wantedModel.value != selectedModel.value) {
+      selectedModel.value = wantedModel.value;
+      //console.log(`selected model ${selectedModel.value}`)
+      wantedModel.value = null;
+      toast.add({
+        severity: "info",
+        summary: "تغییر مدل صحبت کردن",
+        detail:
+          "از این پس سخن یار، با این مدل پاسخ می دهد.\n شروع بررسی مجدد ویس شما ...",
+        life: 2000,
+        closable: false,
+      });
+      setTimeout(updateResponse, 2000);
+    } else {
+      wantedModel.value = null;
+    }
+  }
+});
+
 onMounted(() => {
   if (uploadedFile) doGenerate();
 });
@@ -944,30 +974,45 @@ onMounted(() => {
       </p>
       <Transition>
         <div
-          v-if="!feedbackText"
+          v-if="!feedbackText && !wantedModel"
           id="response-items"
           class="flex flex-wrap justify-center gap-4"
         >
-          <Button
-            v-tooltip="'پسندیدن بازخورد'"
-            aria-label="Like"
+          <CascadeSelect
             class="message-button"
-            icon="pi pi-thumbs-up"
-            rounded
-            severity="success"
-            text
-            @click="likeResponse"
+            v-model="wantedModel"
+            :options="availableModels"
+            optionLabel="modelName"
+            :optionGroupChildren="[]"
+            :placeholder="
+              selectedModel.modelName
+                .toString()
+                .substring(0, selectedModel.modelName.toString().indexOf(' | '))
+            "
+            onselect="modelSelected"
           />
-          <Button
-            v-tooltip="'نپسندیدن بازخورد'"
-            aria-label="Dislike"
-            class="message-button"
-            icon="pi pi-thumbs-down"
-            rounded
-            severity="danger"
-            text
-            @click="showFeedback"
-          />
+          <div class="flex flex-nowrap gap-4">
+            <Button
+              v-tooltip="'پسندیدن بازخورد'"
+              aria-label="Like"
+              class="message-button"
+              icon="pi pi-thumbs-up"
+              rounded
+              severity="success"
+              text
+              @click="likeResponse"
+            />
+            <Button
+              v-tooltip="'نپسندیدن بازخورد'"
+              aria-label="Dislike"
+              class="message-button"
+              icon="pi pi-thumbs-down"
+              rounded
+              severity="danger"
+              text
+              @click="showFeedback"
+            />
+          </div>
         </div>
       </Transition>
     </div>
@@ -993,6 +1038,7 @@ onMounted(() => {
 }
 
 .message-button {
+  font-size: small;
   color: var(--p-button-outlined-plain-border-color);
 }
 
