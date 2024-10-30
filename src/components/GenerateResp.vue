@@ -46,6 +46,8 @@ const availableModels = [
   },
 ];
 
+const MAX_OF_RETRIES_COUNT = 7;
+
 const selectedModel = ref(availableModels[0]);
 const wantedModel = ref(null);
 const showBePatient = ref(false);
@@ -465,12 +467,17 @@ async function doGenerate() {
     //console.log("current model", modelName.value)
 
     // TODO: چک کن ببین میتونیم ویس هایی رو که تأیید میکنه خوبه رو توی CacheContent ذحیره کنیم یا نه.
-    const model = genAi.getGenerativeModel({
-      model: selectedModel.value.modelPartName,
-      safetySettings: feedbackSafetySettings,
-      systemInstruction: sokhanyarSystemInstructions,
-      generationConfig: generationConfig,
-    });
+    const model = genAi.getGenerativeModel(
+      {
+        model: selectedModel.value.modelPartName,
+        safetySettings: feedbackSafetySettings,
+        systemInstruction: sokhanyarSystemInstructions,
+        generationConfig: generationConfig,
+      },
+      {
+        baseUrl: "https://ai.saltech.ir/api",
+      },
+    );
 
     const chatSession = model.startChat(
       feedbackText.value && lastGeneratedResponse.value.response != null
@@ -766,6 +773,7 @@ async function doGenerate() {
     );
     // console.log(decodedResponse);
     generatedResponse.value = decodedResponse;
+    retryIndex.value = 0;
   } catch (error) {
     if (
       error.toString().includes("check quota") ||
@@ -808,7 +816,7 @@ async function doGenerate() {
       error.toString().includes("403") ||
       error.toString().includes("500")
     ) {
-      if (retryIndex.value <= 3) {
+      if (retryIndex.value <= MAX_OF_RETRIES_COUNT) {
         retryIndex.value++;
         console.error("An error occurred from our end; Trying again...");
         updateResponse();
@@ -826,8 +834,30 @@ async function doGenerate() {
           emit("onFailure", error);
         }, 3000);
       }
+    } else if (error.toString().includes("reading 'response'")) {
+      if (retryIndex.value <= MAX_OF_RETRIES_COUNT) {
+        retryIndex.value++;
+        console.error("Reading 'response' object was null!; Trying again...");
+        updateResponse();
+        return;
+      } else {
+        console.error(
+          "Reading 'response' object was null! It must be fixed soon.",
+        );
+        toast.add({
+          severity: "error",
+          summary: "خطا هنگام پردازش اطلاعات",
+          detail:
+            "خطایی در کدنویسی، فرایند را متوقف کرد!\nلطفاً آن را برای بررسی، گزارش کنید.",
+          life: 3000,
+          closable: false,
+        });
+        setTimeout(() => {
+          emit("onFailure", error);
+        }, 3000);
+      }
     } else {
-      console.log(`Unknown Error occurred! ${error.toString()}`);
+      console.error(`Unknown Error occurred! ${error.toString()}`);
       toast.add({
         severity: "error",
         summary: "خطا هنگام پردازش اطلاعات",
