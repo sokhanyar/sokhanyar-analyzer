@@ -86,6 +86,15 @@ async function uploadToGemini() {
           life: 3000,
           closable: false,
         });
+      } else if (error.toString().includes("Network")) {
+        toast.add({
+          severity: "error",
+          summary: "خطا هنگام آپلود",
+          detail:
+            "در شبکه شما مشکلی وجود دارد!\nلطفاً اینترنت خود را بررسی و مجدد امتحان کنید.",
+          life: 3000,
+          closable: false,
+        });
       } else {
         toast.add({
           severity: "error",

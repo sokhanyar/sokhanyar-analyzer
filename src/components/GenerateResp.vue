@@ -148,7 +148,7 @@ Notice: Don't feedback to reports like the above example, only for voices. But y
 * شیوه هایی که درمانجویان باید معمولاً یکی یا دو تا از آنها رو رعایت بکنند (که معمولاً خود درمانجو شیوه ای که استفاده میکند را ذکر می کند. (The Compliance with speech style should be inserted by the input.) ) به شرح زیر است:
 1. کشیده گویی کلمات. باید حرف های هر کلمه را بکشند یا به عبارت دیگر هر حرف را به مدت 1 تا 3 یا 4 ثانیه (بسته به درجه انجام شیوه، متغیر است.) به صورت مَد، بکشند. مثلاً ســــــــــلـــــــــامممممم... (البته این در ویس باید به این گونه صحبت کنند!)؛ شیوه کشیده گویی درجات مختلفی دارد از 1 تا 5 که 5 خیلی کشیده باید گفته شود . و درجه 1 ، خیلی به لحن گفتگوی روزمره شبیه تر است.
 2. اصلاح لکنت. درمانجو باید اگر لکنتی را انجام داد، سریع تشخیص داده و آن را اصلاح کند. اصلاح لکنت به این صورت است که باید کلمه ای که لکنت کرد را مجدداً بیان کند. مثلاً اگر گفت: «خخوبید؟» باید فوراً مجدداً بگوید: «خوبید؟».
-3. تکرار عمدی (لکنت عمدی). درمانجو باید در میان صحبت هایش به تعداد خیلی کم، یک یا چند تا لکنت به صورت تکرار خیلی کوتاه و لحظه ای انجام می دهند و باید آن را فوراً اصلاح کنند. این مورد برای حساسیت زدایی و جلوگیری و رفع ترس حین یا ابتدای صحبت کردن، بسیار مؤثر است.
+3. تکرار کاذب (لکنت عمدی). درمانجو باید در میان صحبت هایش به تعداد خیلی کم، یک یا چند تا لکنت به صورت تکرار خیلی کوتاه و لحظه ای انجام می دهند و باید آن را فوراً اصلاح کنند. این مورد برای حساسیت زدایی و جلوگیری و رفع ترس حین یا ابتدای صحبت کردن، بسیار مؤثر است.
 4. صحبت به صورت رباتی. درمانجو باید جملات را به صورت بریده بریده و با مکث کم یا زیاد بیان کند تا این مکث باعث شود تا لکنت در ابتدای تلفظ کلمه، از بین برود.
 5. کنترل سرعت. مثل تکنیک رباتی (شماره 4) است با این تفاوت که این مکث ها معقولانه تر و سرعت بیان کلمات کمتر از حالت عادی و با لحنی آرام باید باشد.
 معمول درمانجو ها از شیوه کشیده گویی و یا کنترل سرعت استفاده می کنند. اما این انتخاب به عهده آنها نیست و خود درمانگر باید این شیوه ها را به تناسب شدت و نوع لکنت فرد (درمانجو) انتخاب و به او آموزش دهد.
@@ -443,7 +443,6 @@ async function doGenerate() {
       topP: 0.95,
       topK: 40,
       maxOutputTokens: 1024,
-      responseMimeType: "text/plain",
       responseMimeType: "application/json",
       responseSchema: {
         type: "object",
@@ -768,11 +767,9 @@ async function doGenerate() {
     }
     const givenResponse = result.response.candidates[0].content.parts[0].text;
     // console.log(givenResponse);
-    const decodedResponse = JSON.parse(
+    generatedResponse.value = JSON.parse(
       givenResponse.replace(/^```json\n/, "").replace(/\n```$/, ""),
     );
-    // console.log(decodedResponse);
-    generatedResponse.value = decodedResponse;
     retryIndex.value = 0;
   } catch (error) {
     if (
@@ -834,21 +831,22 @@ async function doGenerate() {
           emit("onFailure", error);
         }, 3000);
       }
-    } else if (error.toString().includes("reading 'response'")) {
+    } else if (
+      error.toString().includes("reading 'response'") ||
+      error.toString().includes("JSON")
+    ) {
       if (retryIndex.value <= MAX_OF_RETRIES_COUNT) {
         retryIndex.value++;
         console.error("Reading 'response' object was null!; Trying again...");
         updateResponse();
         return;
       } else {
-        console.error(
-          "Reading 'response' object was null! It must be fixed soon.",
-        );
+        console.error(` ${error}\nIt must be fixed soon.`);
         toast.add({
           severity: "error",
           summary: "خطا هنگام پردازش اطلاعات",
-          detail:
-            "خطایی در کدنویسی، فرایند را متوقف کرد!\nلطفاً آن را برای بررسی، گزارش کنید.",
+          detail: `خطایی در کدنویسی، فرایند را متوقف کرد!\n
+${error}`,
           life: 3000,
           closable: false,
         });
