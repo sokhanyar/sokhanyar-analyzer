@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-RUN npm run build
+RUN vue-tsc --noEmit && vite build
 
 # production stage
 FROM nginx:stable-alpine as production-stage
