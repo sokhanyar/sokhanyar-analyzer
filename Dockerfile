@@ -35,5 +35,4 @@ RUN chmod +x /start.sh
 # Expose port 80
 EXPOSE 80
 
-# Set the entry point to the shell script
-ENTRYPOINT ["/start.sh"]
+CMD ["nginx", "-g", "daemon off;"]
