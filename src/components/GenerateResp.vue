@@ -1354,18 +1354,27 @@ async function doGenerate() {
         updateResponse();
         return;
       } else {
-        console.error(` ${error}\nIt must be fixed soon.`);
-        toast.add({
-          severity: "error",
-          summary: "خطا هنگام پردازش اطلاعات",
-          detail: `خطایی در کدنویسی، فرایند را متوقف کرد!\n
+        if (selectedModel.value != availableModels[0]) {
+          selectedModel.value = availableModels[0];
+          retryIndex.value = 0;
+          apiKey.value = API_KEYS[0];
+          console.error("Quota limit exceed, using lighter version.");
+          updateResponse();
+          return;
+        } else {
+          console.error(` ${error}\nIt must be fixed soon.`);
+          toast.add({
+            severity: "error",
+            summary: "خطا هنگام پردازش اطلاعات",
+            detail: `خطایی در کدنویسی، فرایند را متوقف کرد!\n
 ${error}`,
-          life: 3000,
-          closable: false,
-        });
-        setTimeout(() => {
-          emit("onFailure", error);
-        }, 3000);
+            life: 3000,
+            closable: false,
+          });
+          setTimeout(() => {
+            emit("onFailure", error);
+          }, 3000);
+        }
       }
     } else {
       console.error(`Unknown Error occurred! ${error.toString()}`);
