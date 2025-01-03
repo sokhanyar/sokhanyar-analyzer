@@ -20,8 +20,10 @@ const API_KEYS = [
   import.meta.env.VITE_API_KEY_XI,
   import.meta.env.VITE_API_KEY_XII,
   import.meta.env.VITE_API_KEY_XIII,
-  import.meta.env.VITE_API_KEY_IV,
+  import.meta.env.VITE_API_KEY_XIV,
 ];
+
+console.log(import.meta.env);
 
 const apiKey = ref(API_KEYS[Math.floor(Math.random() * API_KEYS.length)]);
 
