@@ -1,10 +1,10 @@
 <script setup>
 import Uploader from "@/components/Uploader.vue";
 import GenerateResp from "@/components/GenerateResp.vue";
-import { onMounted, ref } from "vue";
-import { useCookies } from "vue3-cookies";
+import {onMounted, ref} from "vue";
+import {useCookies} from "vue3-cookies";
 
-const { cookies } = useCookies();
+const {cookies} = useCookies();
 const API_KEYS = [
   import.meta.env.VITE_API_KEY,
   import.meta.env.VITE_API_KEY_I,
@@ -20,6 +20,7 @@ const API_KEYS = [
   import.meta.env.VITE_API_KEY_XI,
   import.meta.env.VITE_API_KEY_XII,
   import.meta.env.VITE_API_KEY_XIII,
+  import.meta.env.VITE_API_KEY_IV,
 ];
 
 const apiKey = ref(API_KEYS[Math.floor(Math.random() * API_KEYS.length)]);
@@ -28,7 +29,7 @@ const isScrolled = ref(false);
 const systemSettingDark = window.matchMedia("(prefers-color-scheme: dark)");
 const systemDefaultTheme = systemSettingDark.matches;
 const doubleCheckDialogVisible = ref(
-  (cookies.get("double-check-dialog") ?? true) !== "0x3411",
+    (cookies.get("double-check-dialog") ?? true) !== "0x3411",
 );
 
 const uploadedFile = ref(null);
@@ -91,9 +92,9 @@ export default {
 
       // اگر محتوا زیر fixed div باشد و صفحه قابلیت اسکرول داشته باشد
       this.showDivider =
-        content.top < footer.bottom &&
-        pageHeight > viewportHeight &&
-        scrollPosition + 1 < pageHeight - viewportHeight;
+          content.top < footer.bottom &&
+          pageHeight > viewportHeight &&
+          scrollPosition + 1 < pageHeight - viewportHeight;
     },
   },
 };
@@ -101,10 +102,10 @@ export default {
 
 <template>
   <Dialog
-    v-model:visible="doubleCheckDialogVisible"
-    header="سخن یار ممکن است اشتباه کند!"
-    modal
-    style="width: 75%"
+      v-model:visible="doubleCheckDialogVisible"
+      header="سخن یار ممکن است اشتباه کند!"
+      modal
+      style="width: 75%"
   >
     <p class="m-0">
       هوش مصنوعی سخن یار، به دلیل اینکه همچنان در حال یادگیری است، ممکن است بعضی
@@ -114,54 +115,54 @@ export default {
   </Dialog>
   <div ref="footer" :class="['footer', showDivider ? 'footer-shadow' : '']">
     <Transition>
-      <Divider v-if="showDivider" id="footer-boarder" />
+      <Divider v-if="showDivider" id="footer-boarder"/>
     </Transition>
-    <p class="flex" id="powered-by">
+    <p id="powered-by" class="flex">
       قدرت یافته با &nbsp;
       <a id="powered-by-link" href="https://gemini.google.com" target="_blank">
         Gemini
       </a>
-      <img id="powered-by-icon" alt="logo" src="@/assets/gemini-icon.svg" />
+      <img id="powered-by-icon" alt="logo" src="@/assets/gemini-icon.svg"/>
     </p>
-    <div class="flex" id="logos">
+    <div id="logos" class="flex">
       <a
-        href="https://clinic-negaheno.com"
-        rel="noopener noreferrer"
-        target="_blank"
+          href="https://clinic-negaheno.com"
+          rel="noopener noreferrer"
+          target="_blank"
       >
         <img
-          id="negaheno-logo"
-          :src="
+            id="negaheno-logo"
+            :src="
             systemDefaultTheme
               ? '/../negaheno-dark.webp'
               : '/../negaheno-light.webp'
           "
-          alt="نگاه نو"
+            alt="نگاه نو"
         />
       </a>
       <a href="https://saltech.ir" rel="noopener noreferrer" target="_blank">
-        <img id="company-logo" alt="صالتک" src="@/assets/saltech.webp" />
+        <img id="company-logo" alt="صالتک" src="@/assets/saltech.webp"/>
       </a>
     </div>
   </div>
   <div
-    ref="content"
-    :style="{ marginBottom: contentMargin + 'px' }"
-    class="content"
+      ref="content"
+      :style="{ marginBottom: contentMargin + 'px' }"
+      class="content"
   >
     <h1 id="title">تحلیلگر صوت سخن یار</h1>
-    <div class="spacer" />
+    <div class="spacer"/>
     <Uploader
-      v-if="!uploadedFile || !patientName"
-      :api-key="apiKey"
-      @onFileUploaded="fileUploaded"
-      @onPatientNameSubmitted="patientNameSubmitted"
+        v-if="!uploadedFile || !patientName"
+        :api-key="apiKey"
+        @onFileUploaded="fileUploaded"
+        @onPatientNameSubmitted="patientNameSubmitted"
     />
     <GenerateResp
-      v-else
-      :uploaded-file="uploadedFile"
-      :api-key="apiKey"
-      @onFailure="onProcessFailure"
+        v-else
+        :api-key="apiKey"
+        :uploaded-file="uploadedFile"
+        @onFailure="onProcessFailure"
     />
   </div>
 </template>
@@ -180,11 +181,10 @@ export default {
 
 .footer-shadow {
   /* https://smoothshadows.com/#djEsMSw0LDAuMDUsMzAsMzIsMCwjMDMwNzEyLCMwZjE3MmEsIzFlMjkzYiwx */
-  box-shadow:
-    0 2px 2px rgba(3, 7, 18, 0.01),
-    0 8px 8px rgba(3, 7, 18, 0.03),
-    0 18px 17px rgba(3, 7, 18, 0.04),
-    0 32px 30px rgba(3, 7, 18, 0.05);
+  box-shadow: 0 2px 2px rgba(3, 7, 18, 0.01),
+  0 8px 8px rgba(3, 7, 18, 0.03),
+  0 18px 17px rgba(3, 7, 18, 0.04),
+  0 32px 30px rgba(3, 7, 18, 0.05);
 }
 
 .footer {
