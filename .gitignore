@@ -1,5 +1,7 @@
 /.vite/deps/_metadata.json
 /.vite/deps/package.json
+/.env
+/.idea/
 /node_modules/.bin/acorn
 /node_modules/.bin/acorn.cmd
 /node_modules/.bin/acorn.ps1
@@ -9711,3 +9713,5 @@
 /node_modules/yocto-queue/readme.md
 /node_modules/.package-lock.json
 /node_modules
+/dist/
+/.vite/

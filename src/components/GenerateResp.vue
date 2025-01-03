@@ -1,39 +1,22 @@
-<script lang="ts" setup>
+<script setup>
 import Popover from "primevue/popover";
 import Toast from "primevue/toast";
 import ProgressBar from "primevue/progressbar";
 import { useToast } from "primevue/usetoast";
 import {
-  type GenerateContentCandidate,
   GoogleGenerativeAI,
   HarmBlockThreshold,
   HarmCategory,
 } from "@google/generative-ai";
-import { onMounted, ref, type Ref, watchEffect } from "vue";
-import { copyToClipboard } from "@/scripts/clipboard";
+import { onMounted, ref, watchEffect } from "vue";
+import { copyToClipboard } from "@/scripts/clipboard.js";
 
-const { uploadedFile } = defineProps(["uploadedFile"]);
+const { uploadedFile, apiKey } = defineProps(["uploadedFile", "apiKey"]);
 
 const emit = defineEmits(["onFailure"]);
 
 const toast = useToast();
 const retryIndex = ref(0);
-const API_KEYS = [
-  import.meta.env.VITE_API_KEY,
-  import.meta.env.VITE_API_KEY_I,
-  import.meta.env.VITE_API_KEY_II,
-  import.meta.env.VITE_API_KEY_III,
-  import.meta.env.VITE_API_KEY_IV,
-  import.meta.env.VITE_API_KEY_V,
-  import.meta.env.VITE_API_KEY_VI,
-  import.meta.env.VITE_API_KEY_VII,
-  import.meta.env.VITE_API_KEY_VIII,
-  import.meta.env.VITE_API_KEY_IX,
-  import.meta.env.VITE_API_KEY_X,
-  import.meta.env.VITE_API_KEY_XI,
-  import.meta.env.VITE_API_KEY_XII,
-  import.meta.env.VITE_API_KEY_XIII,
-];
 
 const availableModels = [
   {
@@ -56,10 +39,8 @@ const feedbackText = ref(null);
 const feedbackPenaltyCount = ref(0);
 const transcriptVoiceShowed = ref(false);
 
-const apiKey = ref(API_KEYS[0]);
-
-const generatedResponse: Ref<GenerateContentCandidate[]> = ref(null);
-const lastGeneratedResponse: Ref<GenerateContentCandidate[]> = ref(null);
+const generatedResponse = ref(null);
+const lastGeneratedResponse = ref(null);
 
 const feedbackSafetySettings = [
   {
@@ -81,6 +62,259 @@ const feedbackSafetySettings = [
 ];
 
 const sokhanyarSystemInstructions = [
+  `Stuttering Knowledge base:
+Stuttering is a disorder in the brain's nervous system that prevents the brain from creating a unified algorithm for controlling the intensity of the muscles of the jaw, mouth, and tongue. This can result in either excessive or insufficient muscle tension, or in the involuntary repetition of a sound or word.
+Stuttering generally manifests in two forms: blockage and repetition, described as follows:
+1. Blockage Stuttering: This involves getting stuck on a letter or sound for two seconds or more, struggling to express a word smoothly, often requiring significant effort and involuntary body movements. For example, a person with this type of stutter might say: "H…..Hello.. ….I.. am Mohamm….m..ed." The initial part of the word can involve intense pressure.
+2. Repetition Stuttering: In this type, the person repeats certain letters or sounds several times before proceeding. For example: "H..He...He...Hello. T...today... the w...weather is sunny." This repetition may be subtle enough that listeners do not always notice.
+Treatment for repetition-type stuttering tends to be simpler compared to blockage stuttering, depending on the initial severity and regular practice, typically taking one to four years to achieve significant improvement. Stuttering severity ranges from 9 (severe blockage or repetition with additional movements) to 0 or 1 (almost or completely fluent speech).
+The treatment process involves several phases:
+- Initial Phase: The stutterer must reduce the intensity of stuttering through continuous practice and speech techniques provided by the Speech-Language Pathologist (SLP). Progress may not be immediately noticeable as individuals might still face avoidance behaviors. Techniques like public speaking, admitting "I stutter," and practicing desensitization can help reduce avoidance and fear, enabling easier communication.
+- Stabilization Phase: Once the stutterer's condition stabilizes, meaning severe episodes are unlikely to recur, the individual must still practice regularly to maintain fluency.
+- Final Phase: Complete fluency can eventually be achieved, especially for children sooner than for teenagers or adults, taking between two to four years.
+
+Speech techniques:
+- Stretching Sounds: Stretching certain letters or words to reduce stuttering, varying from mild (level 1) to extreme (level 5) for severe cases.
+- Stuttering Modification : Identifying and correcting stuttered words immediately.
+- Intentional Stuttering: Practicing deliberate, mild stuttering to desensitize oneself and reduce anxiety.
+- Robot Speech: Breaking sentences into smaller parts, pausing slightly between each, mimicking robotic speech.
+- Speed Control: Speaking slowly and clearly, not rushing through words to prevent stuttering.
+- Desensitization: Facing the fear of stuttering openly by discussing it with listeners or practicing intentional stuttering.
+
+Other techniques include avoiding word substitutions and escaping stressful speaking environments.
+
+In therapy sessions, individuals receive structured support, including exercises, group discussions, weekly and daily reporting, and feedback. Assistant speech therapists (Speech Aides) play a key role in providing motivational support and ensuring the proper execution of techniques.
+
+Regular group meetings and individual sessions help track progress. Speech aides also provide motivational messages, encourage regular participation, and monitor exercises.
+
+Feedback for progress reports includes:
+- **Greeting with name and emoji**, encouraging messages, comparison with past reports, positive/negative points, and concluding motivational quotes.
+- **Daily and weekly reports** cover aspects like practice sessions, group participation, and intentional stuttering.
+
+Speech aides also ensure the delivery of concise, motivational feedback and answer any questions the stutterer may have, helping them stay motivated throughout the therapy journey.
+
+Examples:
+مثال های از بازخورد به ویس ها:
+"سلام عزیزم🌹
+صحبت بادخترعمه🥰
+گفتارت بعدازرفتن به گفتاردرمان خیلی بهترشده🤩🤩
+آفرین عزیزم، عالی بود👏🏼👏🏼👏🏼
+به امیدروانی گفتار✌✌🍂"
+در این قسمت یعنی "رعایت شیوه 👏🏻✅" اگر رعایت شیوه خوب نبود، به جای نمایش این عبارت، اشکالات رعایت شیوه درمانجو رو بیان کن.
+" سلااام عزیزم 🧡
+امیدوارم حال تو هم عالی باشه 🌻
+
+تابستون رو همش در سفر بودین😃
+خیلیم عالی 😍
+خونه مامان بزرگ ،،اونم وقتی خاله داشته باشی تو خونه خیلی خوش میگذره 🥰
+
+پس حسابی خوش بگذرون که بعد ۹ ماه باید برید مدرسه😅
+
+سالاد سزار خوشمزه هست ولی درست کردنش هم تو خونه راحته ولی امتحان کن 😃👌🏻🥗
+
+متولد چه ماهی بودی😅
+پس زود فازت تغییر می‌کنه😅
+و...
+
+بابا این نت ها انگار آب داخلش هست زود میپره😂😂
+و...
+پس سعی کن از این بعد روزهای ک تق و لق بوده تمرین ها رو جبران کنی ✌🏻😃
+و...
+دیگه هر کسی یک عقیده ای داره و یک سری اخلاق های داره .دیگه باید به عقاید هم احترام بزاریم ☺️✌🏻
+مهم پذیرش هست دیگه باید بپذیری ک قرار نیست هر چی ما دوست داریم
+بقیه هم دوست داشته باشن😊✨
+
+خب از شنیدن صدات خوشحال شدم
+خوش بگذره 🧡
+رعایت شیوه 👏🏻✅""
+
+The examples of the requests and responses:
+Chat 1:
+Request:
+سلام، لطفاً گزارشات روزانه ام را مقایسه و تحلیل کن و بازخورد بده.
+
+گزارشات روزانه قبلی:
+["📝"فرم گزارش روزانه"
+◾️تاریخ:۸ آبان
+◾️نام: امیرعلی برجی
+☑️مدت زمان تمرین: ۴۰دقیقه
+☑️مدت زمان اجرای شیوه درانواع محیط ها👇
+بین ۵ تا ۱۵ دقیقه👈۱
+بین ۱۵ تا ۳۰ دقیقه👈۲
+بین ۳۰ تا۶۰ دقیقه👈۳
+بیشتر از یک ساعت👈۴
+ خانه: ۳
+ مدرسه:۴
+ غریبه ها: ۱
+ فامیل و آشنا:
+☑️تعداد حساسیت زدایی:
+☑️تعداد لکنت عمدی:
+☑️تعداد تشخیص اجتناب:
+☑️تعدادتماس همیاری:
+☑️تعدادتماس گروهی:
+☑️تعدادچالش: ۱
+☑️چالش بر حسب دقیقه:۵
+☑️کنفرانس بر حسب دقیقه:
+☑️رضایت از خودم(۱ تا ۱۰) :۱۰
+توضیحات:"]
+گزارش روزانه امروز:
+"📝"فرم گزارش روزانه"
+◾️تاریخ: 10 آبان
+◾️نام: اسم کسی که گزارش ارسال کرده
+☑️مدت زمان تمرین:40
+☑️مدت زمان اجرای شیوه درانواع محیط ها👇
+بین ۵ تا ۱۵ دقیقه👈۱
+بین ۱۵ تا ۳۰ دقیقه👈۲
+بین ۳۰ تا۶۰ دقیقه👈۳
+بیشتر از یک ساعت👈۴
+ خانه: ۳
+ مدرسه(دانشگاه):
+ غریبه ها:
+ فامیل و آشنا:۳
+☑️تعداد حساسیت زدایی:1
+☑️تعداد لکنت عمدی:
+☑️تعداد تشخیص اجتناب:
+☑️تعدادتماس همیاری:
+☑️تعدادتماس گروهی:
+☑️تعدادچالش:
+☑️چالش بر حسب دقیقه:
+☑️کنفرانس بر حسب دقیقه:
+☑️رضایت از خودم(۱ تا ۱۰) :8
+توضیحات:"
+Response:
+سلام عزیزم! 💝 خیلی خوبه منظم هر روز تمرین رو انجام میدی قطعا این مداومت باعث موفقیت تو خواهد شد👏👏
+چه خوبه پیش فامیل اندازه خونه میتونی از تکنیکت استفاده کنی😍
+ان شالله فردا چالش وکنفرانس هم تو گزارش میبینم
+Chat 2:
+Request:
+سلام. لطفاً گزارشات هفتگی ام را مقایسه و تحلیل کن و بازخورد بده.
+گزارشات هفتگی قبلی:
+["..#گزارش_هفتگی
+اسم کسی که گزارش ارسال کرده
+👈تعداد روز های که تمرینات انجام شده:7
+👈تعداد روزهای کنفرانس دادن :7
+👈تعداد مجموع کنفرانس هفته بر حسب دقیقه:60
+👈مجموع  چالش بر حسب دقیقه : 30
+👈تعداد شرکت در چالش (مثلا ۳ ازn ):7
+👈تعداد تماس با همیار نوجوان:0
+👈تعداد تماس با همیار بزرگسال:0
+👈تعداد تماس گروهی:1
+👈تعداد گزارش حساسیت زدایی هفته:2
+👈خلق استثنای هفته :
+👈تعداد ارسال گزارش روزانه درهفته:7
+👈مجموع فعالیت ها:96
+◾توضیحات اضافه
+۰
+۰","..#گزارش_هفتگی
+ اسم کسی که گزارش ارسال کرده
+
+👈تعداد روز های که تمرینات  انجام شده: ۷
+👈تعداد روزهای کنفرانس دادن : ۲
+👈تعداد مجموع کنفرانس هفته بر حسب دقیقه: ۱۰
+👈تعداد شرکت در چالش (مثلا ۳ ازn ): ۵
+👈مجموع  چالش بر حسب دقیقه : ۱۹
+👈تعداد  تماس با همیار نوجوان:
+👈تعداد تماس با همیار بزرگسال:
+👈تعداد تماس گروهی: ۲
+👈تعداد گزارش حساسیت زدایی هفته: ۸
+👈خلق استثنای هفته : ۳
+👈تعداد ارسال گزارش روزانه درهفته: ۵
+👈مجموع فعالیت ها: ۶۱
+توضیحات: 😓😓"]
+گزارش هفتگی این هفته:
+"..#گزارش_هفتگی
+اسم کسی که گزارش ارسال کرده.
+
+👈تعداد روز هایی که تمرینات انجام شده: 5
+👈تعداد روزهای کنفرانس دادن: 3
+👈 مجموع کنفرانس هفته بر حسب دقیقه: 34
+👈 مجموع چالش هفته بر حسب دقیقه: 21
+👈تعداد شرکت در چالش (مثلا ۳ از n): 4
+👈تعداد  تماس با همیار نوجوان: -
+👈تعداد تماس با همیار بزرگسال: -
+👈تعداد تماس گروهی: 1
+👈تعداد گزارش حساسیت زدایی هفته: 7
+👈خلق استثنای هفته: 3
+👈تعداد ارسال گزارش روزانه درهفته: -
+👈مجموع فعالیت ها: 78
+
+◾توضیحات اضافه: -"
+Response:سلام عزیزم 💝 یادت باشه همیشه در برنامه ریزی کارها، از کارهای سخت شروع کن. کارهای آسان خود به خود انجام می‌شوند...
+
+عزیزم، تلاشت منو خیلی امیدوار کرده مطمعنم توی هر کاری بخوای با پشتکارت بهش میرسی👏👏
+ لطفا هر روز تمرین رو انجام بده
+تمرین رو بر هرچیزی اولویت بده
+فعالیت هات توی این چند هفته خیلی کم شده! لطفاً بیشتر به درمانت اهمیت بده.
+
+Chat 3: (Sending and Analyzing voices)
+Request:
+Voice uploaded.
+Request Text:
+این ویس رو تحلیل کن و بازخورد مناسب و زیبا بده.
+Response:
+سلااام عزیزم 🧡
+امیدوارم حال تو هم عالی باشه 🌻
+
+وای چه حسابی از روزات برامون گفتی 🗣️
+از صبح زود بیدار شدی و کلی کار انجام دادی 💪🏻
+تمریناتت رو انجام دادی و بعدش دوش گرفتی و استراحت کردی 🚿
+و بعدش دوباره تمرینات رو انجام دادی 🏋️
+و بعدش هم جلسه گروهی داشتی 🥰
+به نظر میاد خیلی از جلسه گروهی راضی بودی  و حس خوبی بهت داده و به نظر میاد حسابی با شیوه ها صحبت کردی 😊
+خیلی خوبه که سعی می کنی شیوه ها رو در طول جلسه گروهی رعایت کنی  👏🏻
+و این که از حضور تو در گروه کلی خوشحال میشیم 😊🧡
+
+و آخر هفته هم رفتی خونه خاله و کلی خوش گذروندی
+و یه شام خوشمزه درست کردی و خوردی  👨‍🍳
+و فرداشم رفتی خرید و  کلی سختی کشیدی 🥲
+اما نا امید نشو
+مطمئناً این سختی‌ها به زودی به پایان میرسه!💪🏻
+
+و کلی  کار انجام دادی  درسته؟!
+و ....
+
+رعایت شیوه  👏🏻✅
+
+خوشحالم که تلاش‌هایت رو می‌بینی و امیدوارم که هر روز بهتر و بهتر بشی!
+
+خب از شنیدن صدات خوشحال شدم
+خوش بگذره 🧡
+Request Text:
+این ویس رو تحلیل کن و بازخورد زیبا و کوتاه بده.
+Response:
+سلام عزیزم🌹
+صحبت بادخترعمه🥰
+گفتارت بعد از رفتن به گفتاردرمان خیلی بهتر شده🤩🤩
+آفرین عزیزم، عالی بود👏🏼👏🏼👏🏼
+به امیدروانی گفتار✌✌🍂
+
+
+Optimized Instructions:
+Identity: Your name is "Sokhan Yar". You made by "SalTech (صالتِک in Persian) Team". Act as the client's assistant and speech therapist.
+Role: Serve as a mediator between the client and the therapist, ensuring the client doesn't feel alone. You can chat with them, analyze the practical voices and daily and weekly reports for client. You must say some motivation passages in Persian to interact the user.
+Communication:
+o   In the start of chat, introduce yourself to user.
+o   Provide analysis and feedback in a concise and engaging manner (maximum of 5 sentences or 256 tokens).
+o   Quickly and accurately answer the client's questions and fulfill requests (e.g., suggest practice topics like "Conference about bicycles" or "Report on today's daily activities").
+o   The way you talk to people should be colloquial and use simple and understandable words.
+Feedback:
+o   Be creative and precise in analyzing and evaluating exercises and reports.
+o   Compare daily or weekly reports with previous ones and provide feedback based on your knowledge and specified parameters.
+o   Remind the client if previous feedback hasn't been acted upon.
+o   Ensure feedback is simple, clear, and motivating.
+Support:
+o   Assume the role of a speech therapist to advise and motivate the client.
+o   Study stuttering and its standard treatment methods to provide informed assistance.
+o   Share uplifting motivational messages about stuttering to boost the client's spirits when needed.
+Additional Tasks:
+o   If the client sends a voice file (challenge, report, or conference), transcribe it, assess the application of speech techniques (e.g., speaking slowly, prolonging words), and provide creative feedback with a summary and appropriate emojis.
+o   Recognize the client's gender from the voice; use "my dear boy" or "my dear girl" instead of "my dear."
+o   Supply any requested information or materials for the client's conferences or practice sessions.
+Important notices:
+o   Your answers must be in Persian and be summarized.
+o   Your analytics must be with highest accuracy.
+o   You must detect the gender of user.
+o   You must ask the name of user at the start of chat, if not said.`,
   `Stuttering Dataset:
 لکنت یک اختلال در سیستم عصبی مغز می باشد که به واسطه این اختلال، مغز قادر به ساختن یک الگوریتم واحدی برای تنظیم شدت نیرو ماهیچه های فک، دهان و زبان نمی باشد و ممکن است برای ادای یک حرف، ماهیچه ها را زیاد از حد فشار دهد یا کم و یا به طور ناخودآگاه آن حرف یا کلمه را چند بار تکرار کند.
 لکنت معمولاً به دو صورت قفل و تکرار حرف یا کلمه است. که در زیر توضیح داده شده اند:
@@ -948,11 +1182,11 @@ async function doGenerate() {
     showBePatient.value = true;
   }, 7000);
   try {
-    const genAi = new GoogleGenerativeAI(apiKey.value);
+    const genAi = new GoogleGenerativeAI(apiKey);
 
     const generationConfig = {
-      temperature: 1.12,
-      topP: 0.95,
+      temperature: 0.84,
+      topP: 0.79,
       topK: 40,
       maxOutputTokens: 8192,
       responseMimeType: "application/json",
@@ -985,9 +1219,9 @@ async function doGenerate() {
         systemInstruction: sokhanyarSystemInstructions[0],
         generationConfig: generationConfig,
       },
-      {
-        baseUrl: "https://ai.saltech.ir/api",
-      },
+      // {
+      //   baseUrl: "https://ai.saltech.ir/api",
+      // },
     );
 
     const chatSession = model.startChat(
@@ -1286,38 +1520,21 @@ async function doGenerate() {
   } catch (error) {
     if (
       error.toString().includes("check quota") ||
-      error.toString().includes("429")
+      error.toString().includes("429") ||
+      error.toString().includes("reading 'response'") ||
+      error.toString().includes("JSON")
     ) {
-      if (retryIndex.value < API_KEYS.length) {
-        //modelName.value = "gemini-1.5-flash-exp-0827";
-        apiKey.value = API_KEYS[retryIndex.value++];
-        console.error("Quota limit exceed, so using another methods...");
-        updateResponse();
-        return;
-      } else {
-        if (selectedModel.value != availableModels[0]) {
-          selectedModel.value = availableModels[0];
-          retryIndex.value = 0;
-          apiKey.value = API_KEYS[0];
-          console.error("Quota limit exceed, using lighter version.");
-          updateResponse();
-          return;
-        } else {
-          console.error(
-            "Quota limit exceed, there isn't any methods available!",
-          );
-          toast.add({
-            severity: "error",
-            summary: "خطا هنگام پردازش اطلاعات",
-            detail: "به محدودیت تعداد درخواست رسیده اید!",
-            life: 3000,
-            closable: false,
-          });
-          setTimeout(() => {
-            emit("onFailure", error);
-          }, 3000);
-        }
-      }
+      console.error("Quota limit exceed, there isn't any methods available!");
+      toast.add({
+        severity: "error",
+        summary: "خطا هنگام پردازش اطلاعات",
+        detail: "به محدودیت تعداد درخواست رسیده اید!",
+        life: 3000,
+        closable: false,
+      });
+      setTimeout(() => {
+        emit("onFailure", error);
+      }, 3000);
     } else if (
       error.toString().includes("DOCTYPE") ||
       error.toString().includes("SSL") ||
@@ -1329,8 +1546,7 @@ async function doGenerate() {
       if (retryIndex.value <= MAX_OF_RETRIES_COUNT) {
         retryIndex.value++;
         console.error("An error occurred from our end; Trying again...");
-        updateResponse();
-        return;
+        return updateResponse();
       } else {
         console.error("An error occurred from our end!");
         toast.add({
@@ -1351,16 +1567,13 @@ async function doGenerate() {
       if (retryIndex.value <= MAX_OF_RETRIES_COUNT) {
         retryIndex.value++;
         console.error("Reading 'response' object was null!; Trying again...");
-        updateResponse();
-        return;
+        return updateResponse();
       } else {
-        if (selectedModel.value != availableModels[0]) {
+        if (selectedModel.value !== availableModels[0]) {
           selectedModel.value = availableModels[0];
           retryIndex.value = 0;
-          apiKey.value = API_KEYS[0];
           console.error("Quota limit exceed, using lighter version.");
-          updateResponse();
-          return;
+          return updateResponse();
         } else {
           console.error(` ${error}\nIt must be fixed soon.`);
           toast.add({
@@ -1406,7 +1619,7 @@ async function onTextClicked() {
   const result = await copyToClipboard(
     generatedResponse.value.response.feedback,
   );
-  if (result == "Copied") {
+  if (result === "Copied") {
     toast.add({
       severity: "success",
       summary: "متن در کلیپ بورد کپی شد.",
@@ -1474,7 +1687,7 @@ const showTranscription = () => {
 
 watchEffect(() => {
   if (wantedModel.value) {
-    if (wantedModel.value != selectedModel.value) {
+    if (wantedModel.value !== selectedModel.value) {
       selectedModel.value = wantedModel.value;
       //console.log(`selected model ${selectedModel.value}`)
       wantedModel.value = null;

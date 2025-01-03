@@ -1,16 +1,34 @@
-<script lang="ts" setup>
+<script setup>
 import Uploader from "@/components/Uploader.vue";
 import GenerateResp from "@/components/GenerateResp.vue";
 import { onMounted, ref } from "vue";
 import { useCookies } from "vue3-cookies";
 
 const { cookies } = useCookies();
+const API_KEYS = [
+  import.meta.env.VITE_API_KEY,
+  import.meta.env.VITE_API_KEY_I,
+  import.meta.env.VITE_API_KEY_II,
+  import.meta.env.VITE_API_KEY_III,
+  import.meta.env.VITE_API_KEY_IV,
+  import.meta.env.VITE_API_KEY_V,
+  import.meta.env.VITE_API_KEY_VI,
+  import.meta.env.VITE_API_KEY_VII,
+  import.meta.env.VITE_API_KEY_VIII,
+  import.meta.env.VITE_API_KEY_IX,
+  import.meta.env.VITE_API_KEY_X,
+  import.meta.env.VITE_API_KEY_XI,
+  import.meta.env.VITE_API_KEY_XII,
+  import.meta.env.VITE_API_KEY_XIII,
+];
+
+const apiKey = ref(API_KEYS[Math.floor(Math.random() * API_KEYS.length)]);
 
 const isScrolled = ref(false);
 const systemSettingDark = window.matchMedia("(prefers-color-scheme: dark)");
 const systemDefaultTheme = systemSettingDark.matches;
 const doubleCheckDialogVisible = ref(
-  (cookies.get("double-check-dialog") ?? true) != "0x3411",
+  (cookies.get("double-check-dialog") ?? true) !== "0x3411",
 );
 
 const uploadedFile = ref(null);
@@ -24,7 +42,7 @@ const patientNameSubmitted = (name) => {
   patientName.value = name;
 };
 
-const onProcessFailure = (error) => {
+const onProcessFailure = () => {
   patientName.value = null;
   uploadedFile.value = null;
 };
@@ -39,7 +57,7 @@ onMounted(() => {
 });
 </script>
 
-<script lang="ts">
+<script>
 export default {
   data() {
     return {
@@ -98,14 +116,14 @@ export default {
     <Transition>
       <Divider v-if="showDivider" id="footer-boarder" />
     </Transition>
-    <p id="powered-by">
-      قدرت یافته با
+    <p class="flex" id="powered-by">
+      قدرت یافته با &nbsp;
       <a id="powered-by-link" href="https://gemini.google.com" target="_blank">
         Gemini
       </a>
       <img id="powered-by-icon" alt="logo" src="@/assets/gemini-icon.svg" />
     </p>
-    <div id="logos">
+    <div class="flex" id="logos">
       <a
         href="https://clinic-negaheno.com"
         rel="noopener noreferrer"
@@ -115,8 +133,8 @@ export default {
           id="negaheno-logo"
           :src="
             systemDefaultTheme
-              ? '/sokhanyar/negaheno-dark.webp'
-              : '/sokhanyar/negaheno-light.webp'
+              ? '/../negaheno-dark.webp'
+              : '/../negaheno-light.webp'
           "
           alt="نگاه نو"
         />
@@ -135,12 +153,14 @@ export default {
     <div class="spacer" />
     <Uploader
       v-if="!uploadedFile || !patientName"
+      :api-key="apiKey"
       @onFileUploaded="fileUploaded"
       @onPatientNameSubmitted="patientNameSubmitted"
     />
     <GenerateResp
       v-else
-      :uploadedFile="uploadedFile"
+      :uploaded-file="uploadedFile"
+      :api-key="apiKey"
       @onFailure="onProcessFailure"
     />
   </div>
@@ -148,7 +168,10 @@ export default {
 
 <style scoped>
 #title {
-  font-weight: 625;
+  font-weight: 700;
+  font-size: 2.5rem;
+  text-align: center;
+  margin-right: 0.75em;
 }
 
 .spacer {

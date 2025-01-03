@@ -1,6 +1,18 @@
 @import "fonts/fonts.css";
 
+@layer tailwind-base, primevue, tailwind-utilities;
+
+@layer tailwind-base {
+  @tailwind base;
+}
+
+@layer tailwind-utilities {
+  @tailwind components;
+  @tailwind utilities;
+}
+
 html {
+  direction: rtl;
   box-sizing: border-box;
 }
 

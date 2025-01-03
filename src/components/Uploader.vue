@@ -1,9 +1,11 @@
-<script lang="ts" setup>
+<script setup>
 import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
 import { ref } from "vue";
 import { done, start } from "nprogress";
 import axios from "axios";
+
+const { apiKey } = defineProps(["apiKey"]);
 
 const emit = defineEmits(["onFileUploaded", "onPatientNameSubmitted"]);
 
@@ -19,16 +21,6 @@ async function uploadToGemini() {
   const timeoutId = setTimeout(() => {
     showBePatient.value = true;
   }, 20000);
-
-  // if (!patientName.value) {
-  //   toast.add({
-  //     severity: "error",
-  //     summary: "نام درمانجو را وارد کنید.",
-  //     life: 3000,
-  //     closable: false,
-  //   });
-  //   return;
-  // }
 
   if (!selectedFile.value) {
     toast.add({
@@ -47,12 +39,15 @@ async function uploadToGemini() {
   isUploading.value = true;
   start();
   await axios
-    .post("https://ai.saltech.ir/api/upload/v1beta/files", formData, {
-      headers: {
-        "x-goog-api-key": `${import.meta.env.VITE_API_KEY}`,
-        "Content-Type": "multipart/form-data",
+    .post(
+      `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       },
-    })
+    )
     .then(function (response) {
       if (response.toString().includes("error")) {
         toast.add({
@@ -202,10 +197,6 @@ function onFileSelect(event) {
   align-items: center;
   flex-wrap: wrap;
   margin: 1rem;
-}
-
-.patient-name {
-  width: 75%;
 }
 
 #helper-text {
