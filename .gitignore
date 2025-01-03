@@ -1,6 +1,5 @@
 /.vite/deps/_metadata.json
 /.vite/deps/package.json
-/.env
 /.idea/
 /node_modules/.bin/acorn
 /node_modules/.bin/acorn.cmd

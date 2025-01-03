@@ -23,7 +23,7 @@ const API_KEYS = [
   import.meta.env.VITE_API_KEY_XIV,
 ];
 
-console.log(process.env);
+console.log(import.meta.env);
 
 const apiKey = ref(API_KEYS[Math.floor(Math.random() * API_KEYS.length)]);
 
