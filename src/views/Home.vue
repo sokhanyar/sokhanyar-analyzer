@@ -150,7 +150,7 @@ export default {
       :style="{ marginBottom: contentMargin + 'px' }"
       class="content max-sm:-mr-4"
   >
-    <h1 id="title">تحلیلگر صوت سخن یار</h1>
+    <h1 id="title">تحلیلگر صوت</h1>
     <div class="spacer"/>
     <Uploader
         v-if="!uploadedFile || !patientName"
