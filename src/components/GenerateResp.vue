@@ -1219,9 +1219,9 @@ async function doGenerate() {
         systemInstruction: sokhanyarSystemInstructions[0],
         generationConfig: generationConfig,
       },
-      // {
-      //   baseUrl: "https://ai.saltech.ir/api",
-      // },
+      {
+        baseUrl: "https://ai.saltech.ir/api",
+      }
     );
 
     const chatSession = model.startChat(

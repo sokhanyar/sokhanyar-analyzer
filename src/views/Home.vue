@@ -23,8 +23,6 @@ const API_KEYS = [
   import.meta.env.VITE_API_KEY_XIV,
 ];
 
-console.log(import.meta.env);
-
 const apiKey = ref(API_KEYS[Math.floor(Math.random() * API_KEYS.length)]);
 
 const isScrolled = ref(false);
@@ -300,6 +298,11 @@ export default {
   #negaheno-logo {
     width: 1.2rem;
   }
+}
+
+.content {
+  width: 100%;
+  margin-right: -1rem;
 }
 
 .v-enter-active,

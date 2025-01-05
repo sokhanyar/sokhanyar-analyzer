@@ -1,6 +1,6 @@
 {
   "name": "sokhanyar-analyzer",
-  "version": "1.7.91",
+  "version": "1.7.93",
   "private": true,
   "type": "module",
   "scripts": {

@@ -40,7 +40,7 @@ async function uploadToGemini() {
   start();
   await axios
     .post(
-      `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`,
+      `https://ai.saltech.ir/api/upload/v1beta/files?key=${apiKey}`,
       formData,
       {
         headers: {
