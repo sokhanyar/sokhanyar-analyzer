@@ -148,7 +148,7 @@ export default {
   <div
       ref="content"
       :style="{ marginBottom: contentMargin + 'px' }"
-      class="content"
+      class="content max-sm:-mr-4"
   >
     <h1 id="title">تحلیلگر صوت سخن یار</h1>
     <div class="spacer"/>
@@ -302,7 +302,6 @@ export default {
 
 .content {
   width: 100%;
-  margin-right: -1rem;
 }
 
 .v-enter-active,
